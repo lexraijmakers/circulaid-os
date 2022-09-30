@@ -1,0 +1,24 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model DynamicProductPassport {
+  id        Int      @id @default(autoincrement())
+  qruid     Int      @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  repairs   Repair[]
+}
+
+model Repair {
+  id          Int                     @id @default(autoincrement())
+  createdAt   DateTime                @default(now())
+  description String?
+  passport    DynamicProductPassport? @relation(fields: [passportId], references: [id])
+  passportId  Int?
+}
