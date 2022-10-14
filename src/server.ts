@@ -1,12 +1,22 @@
-import { ApolloServer } from 'apollo-server'
+import 'reflect-metadata'
+import { ApolloServer } from '@apollo/server'
+import { startStandaloneServer } from '@apollo/server/standalone'
 import { schema } from './schema'
 import { context } from './context'
 
-const server = new ApolloServer({
-    schema: schema,
-    context: context
-})
+interface MyContext {
+    token?: String
+}
 
-server.listen().then(async ({ url }) => {
-    console.log(`🚀 Server ready at: ${url}`)
-})
+async function startApolloServer() {
+    const server = new ApolloServer<MyContext>({ schema })
+
+    const { url } = await startStandaloneServer(server, {
+        context: context,
+        listen: { port: 4000 }
+    })
+
+    console.log(`🚀  Server ready at ${url}`)
+}
+
+startApolloServer()

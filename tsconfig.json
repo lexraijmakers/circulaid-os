@@ -2,9 +2,11 @@
     "compilerOptions": {
         "outDir": "dist",
         "rootDir": "src",
-        "esModuleInterop": true,
-        "lib": ["esnext"],
-        "strict": true
+        "target": "es2018",
+        "module": "commonjs",
+        "lib": ["es2018", "esnext.asynciterable"],
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true
     },
     "include": ["src/**/*"]
 }
