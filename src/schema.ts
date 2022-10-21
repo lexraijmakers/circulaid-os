@@ -1,34 +1,53 @@
-import { buildSchemaSync, AuthChecker } from 'type-graphql'
-import {
-    ModelsEnhanceMap,
-    ModelConfig,
-    applyModelsEnhanceMap,
-    resolvers
-} from '@generated/type-graphql'
-import { Authorized, Extensions } from 'type-graphql'
+import { DynamicProductPassport, Repair } from 'nexus-prisma'
+import { makeSchema, objectType, queryType, fieldAuthorizePlugin } from 'nexus'
+import NexusPrismaScalars from 'nexus-prisma/scalars'
 import { Context } from './context'
 
-export const customAuthChecker: AuthChecker<Context> = ({ root, args, context, info }, roles) => {
-    return !!context?.user?.roles?.some((r) => roles?.includes(r))
-}
-
-const repairEnhancedConfig: ModelConfig<'Repair'> = {
-    fields: {
-        description: [
-            Authorized('ADMIN'),
-            Extensions({ logMessage: 'Danger zone', logLevel: 'WARN' })
-        ]
+const DynamicProductPassportObject = objectType({
+    name: DynamicProductPassport.$name,
+    description: DynamicProductPassport.$description,
+    definition(t) {
+        t.field(DynamicProductPassport.id)
+        t.field(DynamicProductPassport.qruid)
+        t.field(DynamicProductPassport.createdAt)
+        t.field(DynamicProductPassport.updatedAt)
+        t.field(DynamicProductPassport.repairs)
     }
-}
+})
 
-const modelsEnhanceMap: ModelsEnhanceMap = {
-    Repair: repairEnhancedConfig
-}
+const RepairObject = objectType({
+    name: Repair.$name,
+    description: Repair.$description,
+    definition(t) {
+        t.field(Repair.id)
+        t.field(Repair.createdAt)
+        t.field(Repair.description)
+        t.field(Repair.passport)
+        t.field(Repair.passportId)
+    }
+})
 
-applyModelsEnhanceMap(modelsEnhanceMap)
+const Query = queryType({
+    definition(t) {
+        t.nonNull.list.nonNull.field('repairs', {
+            type: 'Repair',
+            authorize: (_, __, { user }: Context) => user?.permissions?.includes('read:repairs'),
+            resolve(_, __, ctx: Context) {
+                return ctx.prisma.repair.findMany()
+            }
+        })
+        t.nonNull.list.nonNull.field('dynamicProductPassports', {
+            type: 'DynamicProductPassport',
+            authorize: (_, __, { user }: Context) =>
+                user?.permissions?.includes('read:dynamicProductPassports'),
+            resolve(_, __, ctx: Context) {
+                return ctx.prisma.dynamicProductPassport.findMany()
+            }
+        })
+    }
+})
 
-export const schema = buildSchemaSync({
-    resolvers,
-    authChecker: customAuthChecker,
-    authMode: 'null'
+export const schema = makeSchema({
+    types: [NexusPrismaScalars, DynamicProductPassportObject, RepairObject, Query],
+    plugins: [fieldAuthorizePlugin()]
 })

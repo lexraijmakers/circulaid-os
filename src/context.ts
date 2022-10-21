@@ -6,6 +6,7 @@ import { GraphQLError } from 'graphql'
 export interface UserInterface {
     name: string
     roles: string[]
+    permissions: string[]
 }
 
 export interface Context {
@@ -19,14 +20,12 @@ export const context = async ({
     req
 }: StandaloneServerContextFunctionArgument): Promise<Context> => {
     const token = req.headers.authorization || ''
-
     const result = await isTokenValid(token)
-
-    console.log(result)
 
     const user: UserInterface = {
         name: 'lex',
-        roles: ['TEST']
+        roles: ['TEST'],
+        permissions: ['read:repairs', 'read:dynamicProductPassports']
     }
 
     if (!user) {
